@@ -1,1 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polaris Alliance Market Hub</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #0f131a; color: #f0f4f8; margin: 0; padding: 20px; box-sizing: border-box; }
+        .container { background: #161c26; width: 100%; max-width: 450px; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); border: 1px solid #1f293a; }
+        h2 { font-size: 24px; text-align: center; margin-top: 0; margin-bottom: 25px; color: #00A2FF; letter-spacing: 0.5px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; color: #8fa0b3; letter-spacing: 0.5px; }
+        input, select { width: 100%; padding: 12px; background: #0f131a; border: 1px solid #2d3b50; border-radius: 6px; color: #fff; font-size: 15px; box-sizing: border-box; transition: border-color 0.2s; }
+        input:focus, select:focus { outline: none; border-color: #00A2FF; }
+        button { background: #00A2FF; color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; transition: background 0.2s; -webkit-appearance: none; }
+        button:hover { background: #0082cc; }
+        button:disabled { background: #1f293a; color: #4e5d73; cursor: not-allowed; }
+        #status { text-align: center; margin-top: 15px; font-size: 14px; font-weight: 500; }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Polaris Alliance Market Hub</h2>
+        
+        <div class="form-group">
+            <label for="airlineName">Airline Name</label>
+            <input type="text" id="airlineName" placeholder="Enter your airline name">
+        </div>
 
+        <div class="form-group">
+            <label for="aircraftModel">Aircraft Model</label>
+            <select id="aircraftModel">
+                <option value="Airbus A320neo">Airbus A320neo</option>
+                <option value="Boeing 737-MAX">Boeing 737-MAX</option>
+                <option value="Airbus A350-1000">Airbus A350-1000</option>
+                <option value="Boeing 777-300ER">Boeing 777-300ER</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" min="1" value="1">
+        </div>
+
+        <button id="submitBtn" onclick="sendOrder()">Submit Order to Fleet Ops</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        // PASTE YOUR DISCORD WEBHOOK URL BETWEEN THE QUOTES BELOW
+        const DISCORD_WEBHOOK_URL = "PASTE_YOUR_WEBHOOK_URL_HERE";
+
+        async function sendOrder() {
+            const airline = document.getElementById('airlineName').value.trim();
+            const model = document.getElementById('aircraftModel').value;
+            const quantity = document.getElementById('quantity').value;
+            const statusText = document.getElementById('status');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!airline) {
+                statusText.className = "error";
+                statusText.innerText = "Please enter an Airline Name.";
+                return;
+            }
+
+            statusText.className = "";
+            statusText.innerText = "Processing dispatch...";
+            submitBtn.disabled = true;
+
+            const payload = {
+                embeds: [{
+                    title: "🚀 New Fleet Order Logged",
+                    color: 41727,
+                    fields: [
+                        { name: "Airline / Member", value: airline, inline: true },
+                        { name: "Aircraft Model", value: model, inline: true },
+                        { name: "Quantity Requested", value: quantity, inline: true }
+                    ],
+                    footer: { text: "Polaris Alliance Automated Dispatch System" },
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            try {
+                const response = await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    statusText.className = "success";
+                    statusText.innerText = "Order successfully sent to Fleet Ops!";
+                    document.getElementById('airlineName').value = "";
+                    document.getElementById('quantity').value = "1";
+                } else {
+                    statusText.className = "error";
+                    statusText.innerText = "Discord rejected the connection. Check your Webhook URL.";
+                }
+            } catch (error) {
+                statusText.className = "error";
+                statusText.innerText = "Network error. Could not reach Discord.";
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
